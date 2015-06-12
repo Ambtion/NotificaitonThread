@@ -12,9 +12,39 @@
 #define TEST_NOTIFICATION @"TEST"
 
 
-//#define MsgInThread
+
+#define MsgInThread
+//#define MsgInMulThread
+//#define MsgMulThreadSafe
 
 #ifdef MsgInThread
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    NSLog(@"current thread = %@", [NSThread currentThread]);
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:TEST_NOTIFICATION object:nil userInfo:nil];
+        
+    });
+}
+
+- (void)handleMachMessage:(void *)msg {
+    
+    NSLog(@"current thread = %@", [NSThread currentThread]);
+    
+    NSLog(@"test notification");
+    
+}
+
+@end
+
+#endif
+
+#ifdef MsgInMulThread
 
 @interface ViewController()<NSMachPortDelegate>
 
@@ -24,7 +54,6 @@
 @property (nonatomic) NSMachPort        *notificationPort;      // 用于向期望线程发送信号的通信端口
 
 @end
-
 
 @implementation ViewController
 
@@ -41,8 +70,7 @@
     self.notificationPort = [[NSMachPort alloc] init];
     self.notificationPort.delegate = self;
     
-    // 往当前线程的run loop添加端口源
-    // 当Mach消息到达而接收线程的run loop没有运行时，则内核会保存这条消息，直到下一次进入run loop
+
     [[NSRunLoop currentRunLoop] addPort:self.notificationPort
                                 forMode:(__bridge NSString *)kCFRunLoopCommonModes];
     
@@ -91,8 +119,11 @@
 
 @end
 
-#else
 
+
+#define MsgMulThreadSafe
+
+//-------------------------------- Nofification Crash
 /**
  * 异步线程post消息
  */
