@@ -1,5 +1,6 @@
 
-tification在多线程下的转发
+# Notification在多线程下的转发
+
 ## 1：Notification的发送与接收处理都是在同一个线程中
 
 ***
